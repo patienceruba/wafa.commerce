@@ -4,7 +4,14 @@ import dotenv
 dotenv.load_dotenv(override=True)
 
 # CORS settings
-CORS_ORIGINS = ["*"]
+CORS_ORIGINS = [
+    "https://wafa-commerce-frontend.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "*",
+]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["*"]
 CORS_ALLOW_HEADERS = ["*"]
