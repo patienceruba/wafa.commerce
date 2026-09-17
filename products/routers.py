@@ -143,6 +143,7 @@ def list_products(
 
 
 @router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 def create_product(
     product_data: ProductCreate,
     current_user: User = Depends(get_current_user),
@@ -178,6 +179,7 @@ def get_product_details(
 
 
 @router.put("/{product_id}", response_model=ProductResponse)
+@router.put("/{product_id}/", response_model=ProductResponse, include_in_schema=False)
 def update_product(
     product_id: int,
     product_data: ProductUpdate,
@@ -189,6 +191,7 @@ def update_product(
 
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{product_id}/", status_code=status.HTTP_204_NO_CONTENT, include_in_schema=False)
 def delete_product(
     product_id: int,
     current_user: User = Depends(get_current_user),

@@ -45,6 +45,7 @@ def get_seller_products(
 
 
 @router.post("/products", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/products/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 def create_seller_product(
     product_data: ProductCreate,
     current_user: User = Depends(require_seller_user),
@@ -55,6 +56,7 @@ def create_seller_product(
 
 
 @router.put("/products/{product_id}", response_model=ProductResponse)
+@router.put("/products/{product_id}/", response_model=ProductResponse, include_in_schema=False)
 def update_seller_product(
     product_id: int,
     product_data: ProductUpdate,
@@ -66,6 +68,7 @@ def update_seller_product(
 
 
 @router.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/products/{product_id}/", status_code=status.HTTP_204_NO_CONTENT, include_in_schema=False)
 def delete_seller_product(
     product_id: int,
     current_user: User = Depends(require_seller_user),
