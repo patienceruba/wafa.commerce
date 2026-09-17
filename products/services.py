@@ -24,6 +24,19 @@ def generate_slug(text: str) -> str:
     return text.strip("-")
 
 
+def sanitize_image_url(url: Optional[str]) -> Optional[str]:
+    """Convert Unsplash webpage URLs to direct raw image URLs."""
+    if not url or not isinstance(url, str):
+        return url
+    clean = url.strip()
+    # If it's an Unsplash webpage URL (e.g. https://unsplash.com/photos/turned-on-laptop-on-table-HyTwtsk8XqA)
+    unsplash_match = re.search(r"unsplash\.com/photos/(?:[\w-]+-)?([a-zA-Z0-9_-]+)", clean)
+    if unsplash_match and not "images.unsplash.com" in clean:
+        photo_id = unsplash_match.group(1)
+        return f"https://unsplash.com/photos/{photo_id}/download?force=true&w=800"
+    return clean
+
+
 class CategoryService:
     def __init__(self, db: Session):
         self.db = db
@@ -107,7 +120,14 @@ class ProductService:
         page: int = 1,
         page_size: int = 20,
     ) -> Tuple[List[Product], int]:
-        query = self.db.query(Product).filter(Product.is_active == True)
+        query = (
+            self.db.query(Product)
+            .options(
+                joinedload(Product.category),
+                joinedload(Product.images),
+            )
+            .filter(Product.is_active == True)
+        )
 
         # Filters
         if category_id:
@@ -201,6 +221,11 @@ class ProductService:
         product_dict = data.model_dump(exclude={"colors", "slug"})
         colors_data = [color.model_dump() for color in data.colors] if data.colors else []
 
+        if "img" in product_dict and product_dict["img"]:
+            product_dict["img"] = sanitize_image_url(product_dict["img"])
+        if "gallery" in product_dict and product_dict["gallery"]:
+            product_dict["gallery"] = [sanitize_image_url(u) for u in product_dict["gallery"] if u]
+
         product = Product(
             **product_dict,
             slug=slug,
@@ -221,6 +246,10 @@ class ProductService:
             update_dict["colors"] = [
                 c.model_dump() if hasattr(c, "model_dump") else c for c in update_dict["colors"]
             ]
+        if "img" in update_dict and update_dict["img"]:
+            update_dict["img"] = sanitize_image_url(update_dict["img"])
+        if "gallery" in update_dict and update_dict["gallery"]:
+            update_dict["gallery"] = [sanitize_image_url(u) for u in update_dict["gallery"] if u]
 
         for key, value in update_dict.items():
             setattr(product, key, value)

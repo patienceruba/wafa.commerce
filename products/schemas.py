@@ -142,6 +142,8 @@ class ProductBase(BaseModel):
     sku: Optional[str] = None
     brand: Optional[str] = None
     category_id: Optional[int] = None
+    cat: Optional[str] = None
+    image_url: Optional[str] = None
     price: float = Field(..., gt=0)
     old_price: Optional[float] = Field(None, gt=0)
     cost_price: Optional[float] = Field(None, gt=0)
@@ -169,6 +171,8 @@ class ProductUpdate(BaseModel):
     sku: Optional[str] = None
     brand: Optional[str] = None
     category_id: Optional[int] = None
+    cat: Optional[str] = None
+    image_url: Optional[str] = None
     price: Optional[float] = Field(None, gt=0)
     old_price: Optional[float] = None
     cost_price: Optional[float] = None
@@ -189,6 +193,8 @@ class ProductUpdate(BaseModel):
 class ProductResponse(ProductBase):
     id: int
     slug: str
+    cat: Optional[str] = None
+    category: Optional[CategoryResponse] = None
     rating: float
     reviews_count: int
     discount_percentage: int = 0

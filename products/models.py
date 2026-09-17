@@ -54,7 +54,7 @@ class Product(Base):
     in_stock = Column(Boolean, default=True, nullable=False)
 
     # Media & Display
-    img = Column(String(500), nullable=True)  # Primary thumbnail / featured image
+    img = Column(Text, nullable=True)  # Primary thumbnail / featured image (supports URL or base64 data URL)
     gallery = Column(JSON, default=list, nullable=False)  # List of image URLs
     badge = Column(String(50), nullable=True)  # e.g., "BESTSELLER", "HOT", "SALE", "NEW"
     desc = Column(Text, nullable=True)  # Full description / overview
@@ -82,6 +82,11 @@ class Product(Base):
     variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
     images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan", order_by="ProductImage.display_order")
 
+    @property
+    def cat(self) -> str:
+        if self.category and self.category.name:
+            return self.category.name
+        return "Accessories"
 
     @property
     def discount_percentage(self) -> int:
