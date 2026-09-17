@@ -1,4 +1,7 @@
 .env
 ecommerce.db
 seed.py
-superbasekey.txt
+superbasekey.txty
+y.pub
+*.pem
+*.key
