@@ -88,6 +88,11 @@ class Product(Base):
             return self.category.name
         return "Accessories"
 
+    @cat.setter
+    def cat(self, value: Any):
+        # Pass-through setter prevents AttributeError on direct assignments
+        pass
+
     @property
     def discount_percentage(self) -> int:
         if self.old_price and self.old_price > self.price:

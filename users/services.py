@@ -282,6 +282,11 @@ class UserService:
         # Success! Retrieve user and clear OTP session
         user = otp_session.user
 
+        # Mark user email as verified upon successful OTP validation
+        if not user.is_email_verified:
+            user.is_email_verified = True
+            self.db.add(user)
+
         # Generate Access and Refresh Tokens
         access_token, refresh_token = self._generate_auth_tokens(
             user, ip_address=ip_address, user_agent=user_agent
@@ -299,6 +304,7 @@ class UserService:
             # Delete OTP session to prevent reuse
             self.db.delete(otp_session)
             self.db.commit()
+            self.db.refresh(user)
         except Exception as e:
             self.db.rollback()
             raise e
@@ -396,6 +402,7 @@ class UserService:
                 role="user",
                 hashed_password=hashed_pwd,
                 is_active=True,
+                is_email_verified=True,
             )
             self.db.add(user)
             self.db.commit()
@@ -405,6 +412,10 @@ class UserService:
                 raise ValueError(
                     "User account is inactive. Please contact system administrator."
                 )
+            if not user.is_email_verified:
+                user.is_email_verified = True
+                self.db.add(user)
+                self.db.commit()
 
         # Generate Access and Refresh Tokens
         access_token, refresh_token = self._generate_auth_tokens(
@@ -1079,6 +1090,9 @@ class UserService:
 
         # Update password using the same hasher used elsewhere in the app
         user.hashed_password = get_password_hash(new_password)
+        if not user.is_email_verified:
+            user.is_email_verified = True
+            self.db.add(user)
 
         # Revoke all active sessions for security
         self.db.query(RefreshToken).filter(

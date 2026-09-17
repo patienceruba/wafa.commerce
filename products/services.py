@@ -209,6 +209,44 @@ class ProductService:
             .first()
         )
 
+    def _resolve_category_id(self, cat_name_or_id: Optional[Any], explicit_category_id: Optional[int] = None) -> Optional[int]:
+        if cat_name_or_id:
+            if isinstance(cat_name_or_id, int):
+                return cat_name_or_id
+            if isinstance(cat_name_or_id, str) and cat_name_or_id.isdigit():
+                return int(cat_name_or_id)
+
+            name_str = str(cat_name_or_id).strip()
+            if name_str and name_str.lower() != "all":
+                # Look up existing category by name or slug
+                cat = (
+                    self.db.query(Category)
+                    .filter(
+                        or_(
+                            func.lower(Category.name) == name_str.lower(),
+                            func.lower(Category.slug) == generate_slug(name_str),
+                        )
+                    )
+                    .first()
+                )
+                if cat:
+                    return cat.id
+
+                # Auto-create category if it does not exist
+                new_cat = Category(
+                    name=name_str,
+                    slug=generate_slug(name_str),
+                    is_active=True,
+                )
+                self.db.add(new_cat)
+                self.db.commit()
+                self.db.refresh(new_cat)
+                return new_cat.id
+
+        if explicit_category_id:
+            return explicit_category_id
+        return None
+
     def create(self, data: ProductCreate) -> Product:
         slug = data.slug or generate_slug(data.name)
         # Ensure unique slug
@@ -220,6 +258,13 @@ class ProductService:
 
         product_dict = data.model_dump(exclude={"colors", "slug"})
         colors_data = [color.model_dump() for color in data.colors] if data.colors else []
+
+        # Resolve category name string to foreign key category_id
+        cat_name = product_dict.pop("cat", None)
+        explicit_cat_id = product_dict.get("category_id")
+        resolved_cat_id = self._resolve_category_id(cat_name, explicit_cat_id)
+        if resolved_cat_id is not None:
+            product_dict["category_id"] = resolved_cat_id
 
         if "img" in product_dict and product_dict["img"]:
             product_dict["img"] = sanitize_image_url(product_dict["img"])
@@ -250,6 +295,15 @@ class ProductService:
             update_dict["img"] = sanitize_image_url(update_dict["img"])
         if "gallery" in update_dict and update_dict["gallery"]:
             update_dict["gallery"] = [sanitize_image_url(u) for u in update_dict["gallery"] if u]
+
+        # Resolve category name string to category_id
+        cat_name = update_dict.pop("cat", None)
+        explicit_cat_id = update_dict.get("category_id")
+        if cat_name is not None or explicit_cat_id is not None:
+            resolved_cat_id = self._resolve_category_id(cat_name, explicit_cat_id)
+            if resolved_cat_id is not None:
+                update_dict["category_id"] = resolved_cat_id
+                product.category_id = resolved_cat_id
 
         for key, value in update_dict.items():
             setattr(product, key, value)

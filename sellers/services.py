@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any, Tuple
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, or_
 from fastapi import HTTPException, status
 
 from users.models import User
@@ -13,6 +13,42 @@ from orders.models import Order, OrderItem, OrderStatus, PaymentStatus
 class SellerService:
     def __init__(self, db: Session):
         self.db = db
+
+    def _resolve_category_id(self, cat_name_or_id: Optional[Any], explicit_category_id: Optional[int] = None) -> Optional[int]:
+        if cat_name_or_id:
+            if isinstance(cat_name_or_id, int):
+                return cat_name_or_id
+            if isinstance(cat_name_or_id, str) and cat_name_or_id.isdigit():
+                return int(cat_name_or_id)
+
+            name_str = str(cat_name_or_id).strip()
+            if name_str and name_str.lower() != "all":
+                cat = (
+                    self.db.query(Category)
+                    .filter(
+                        or_(
+                            func.lower(Category.name) == name_str.lower(),
+                            func.lower(Category.slug) == generate_slug(name_str),
+                        )
+                    )
+                    .first()
+                )
+                if cat:
+                    return cat.id
+
+                new_cat = Category(
+                    name=name_str,
+                    slug=generate_slug(name_str),
+                    is_active=True,
+                )
+                self.db.add(new_cat)
+                self.db.commit()
+                self.db.refresh(new_cat)
+                return new_cat.id
+
+        if explicit_category_id:
+            return explicit_category_id
+        return None
 
     def get_seller_dashboard(self, seller_id: int) -> Dict[str, Any]:
         """Aggregate seller-specific metrics: revenue, orders, inventory, rating."""
@@ -80,6 +116,13 @@ class SellerService:
         product_dict = data.model_dump(exclude={"colors", "slug"})
         colors_data = [color.model_dump() for color in data.colors] if data.colors else []
 
+        # Resolve category name string to category_id
+        cat_name = product_dict.pop("cat", None)
+        explicit_cat_id = product_dict.get("category_id")
+        resolved_cat_id = self._resolve_category_id(cat_name, explicit_cat_id)
+        if resolved_cat_id is not None:
+            product_dict["category_id"] = resolved_cat_id
+
         product = Product(
             **product_dict,
             seller_id=seller_id,
@@ -102,6 +145,15 @@ class SellerService:
             update_dict["colors"] = [
                 c.model_dump() if hasattr(c, "model_dump") else c for c in update_dict["colors"]
             ]
+
+        # Resolve category name string to category_id
+        cat_name = update_dict.pop("cat", None)
+        explicit_cat_id = update_dict.get("category_id")
+        if cat_name is not None or explicit_cat_id is not None:
+            resolved_cat_id = self._resolve_category_id(cat_name, explicit_cat_id)
+            if resolved_cat_id is not None:
+                update_dict["category_id"] = resolved_cat_id
+                product.category_id = resolved_cat_id
 
         for key, value in update_dict.items():
             setattr(product, key, value)
