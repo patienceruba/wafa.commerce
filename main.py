@@ -53,13 +53,20 @@ app.include_router(assistant_router)
 
 
 
-@app.get("/", tags=["health"])
+from fastapi.responses import Response
+
+@app.api_route("/", methods=["GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE"], tags=["health"])
+@app.api_route("", methods=["GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE"], tags=["health"], include_in_schema=False)
 def health_check():
     return {
         "status": "healthy",
         "service": "Wafa E-Commerce API",
         "version": "1.0.0",
     }
+
+@app.api_route("/favicon.ico", methods=["GET", "HEAD", "OPTIONS"], include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
 
 
 if __name__ == "__main__":

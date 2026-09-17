@@ -62,6 +62,7 @@ def preview_checkout(
 
 
 @router.post("", response_model=OrderDetailResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=OrderDetailResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 def create_order(
     order_data: OrderCreate,
     current_user: Optional[User] = Depends(get_optional_user),
@@ -73,6 +74,7 @@ def create_order(
 
 
 @router.get("", response_model=PaginatedOrdersResponse)
+@router.get("/", response_model=PaginatedOrdersResponse, include_in_schema=False)
 def list_orders(
     status: Optional[str] = None,
     payment_status: Optional[str] = None,

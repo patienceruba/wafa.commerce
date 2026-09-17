@@ -100,6 +100,7 @@ def delete_category(
 # ==========================================
 
 @router.get("", response_model=PaginatedProductsResponse)
+@router.get("/", response_model=PaginatedProductsResponse, include_in_schema=False)
 def list_products(
     category_id: Optional[int] = None,
     category: Optional[str] = Query(None, description="Category slug"),

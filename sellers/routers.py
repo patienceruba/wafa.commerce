@@ -35,6 +35,7 @@ def get_seller_dashboard(
 
 
 @router.get("/products", response_model=List[ProductResponse])
+@router.get("/products/", response_model=List[ProductResponse], include_in_schema=False)
 def get_seller_products(
     search: Optional[str] = None,
     current_user: User = Depends(require_seller_user),
