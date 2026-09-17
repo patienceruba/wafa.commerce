@@ -10,7 +10,7 @@ CORS_ALLOW_METHODS = ["*"]
 CORS_ALLOW_HEADERS = ["*"]
 
 # JWT settings
-JWT_SECRET = os.getenv("JWT_SECRET", "super_secret_fallback_key_for_development_purposes_only_change_me_in_prod")
+JWT_SECRET = os.getenv("JWT_SECRET") or os.getenv("SECRETE_KE") or "super_secret_fallback_key_for_development_purposes_only_change_me_in_prod"
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))

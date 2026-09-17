@@ -1,3 +1,4 @@
 .env
 ecommerce.db
 seed.py
+superbasekey.txt

@@ -111,7 +111,7 @@ def list_products(
     in_stock_only: bool = False,
     is_popular_only: bool = False,
     is_featured_only: bool = False,
-    sort_by: str = Query("newest", regex="^(newest|price_asc|price_desc|rating|popular)$"),
+    sort_by: str = Query("newest", pattern="^(newest|price_asc|price_desc|rating|popular)$"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     product_service: ProductService = Depends(get_product_service),
