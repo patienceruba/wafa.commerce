@@ -9,3 +9,5 @@ email-validator
 python-jose[cryptography]
 passlib[bcrypt]
 requests
+argon2-cffi
+passlib[argon2]
