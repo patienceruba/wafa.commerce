@@ -71,7 +71,22 @@ app.include_router(assistant_router)
 
 
 
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    origin = request.headers.get("origin")
+    headers = {
+        "Access-Control-Allow-Origin": origin or "*",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD",
+        "Access-Control-Allow-Headers": "*",
+    } if origin else {}
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Server Error: {str(exc)}"},
+        headers=headers,
+    )
 
 @app.api_route("/", methods=["GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE"], tags=["health"])
 @app.api_route("", methods=["GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE"], tags=["health"], include_in_schema=False)

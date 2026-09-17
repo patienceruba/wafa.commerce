@@ -266,13 +266,22 @@ class ProductService:
         if resolved_cat_id is not None:
             product_dict["category_id"] = resolved_cat_id
 
+        # Map image_url to img if provided
+        image_url_val = product_dict.pop("image_url", None)
+        if image_url_val and not product_dict.get("img"):
+            product_dict["img"] = image_url_val
+
         if "img" in product_dict and product_dict["img"]:
             product_dict["img"] = sanitize_image_url(product_dict["img"])
         if "gallery" in product_dict and product_dict["gallery"]:
             product_dict["gallery"] = [sanitize_image_url(u) for u in product_dict["gallery"] if u]
 
+        # Filter strictly to valid columns on the Product database model
+        valid_cols = {c.name for c in Product.__table__.columns}
+        filtered_dict = {k: v for k, v in product_dict.items() if k in valid_cols}
+
         product = Product(
-            **product_dict,
+            **filtered_dict,
             slug=slug,
             colors=colors_data,
         )
@@ -305,8 +314,15 @@ class ProductService:
                 update_dict["category_id"] = resolved_cat_id
                 product.category_id = resolved_cat_id
 
+        # Map image_url to img if provided
+        image_url_val = update_dict.pop("image_url", None)
+        if image_url_val and not update_dict.get("img"):
+            update_dict["img"] = image_url_val
+
+        valid_cols = {c.name for c in Product.__table__.columns}
         for key, value in update_dict.items():
-            setattr(product, key, value)
+            if key in valid_cols:
+                setattr(product, key, value)
 
         self.db.commit()
         self.db.refresh(product)
