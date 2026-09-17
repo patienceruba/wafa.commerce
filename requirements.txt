@@ -10,7 +10,4 @@ passlib[bcrypt]
 requests
 argon2-cffi
 passlib[argon2]
-<<<<<<< HEAD
 supabase
-=======
->>>>>>> 953883a00127993f7eb53565c5b9db55c8a1f8a3
